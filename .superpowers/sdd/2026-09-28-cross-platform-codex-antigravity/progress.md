@@ -9,3 +9,5 @@ Task 1: complete — executable/state resolution and Codex packaging scaffold; t
 Task 2: complete — safe foreground runner, argument parsing, timeout and fake executable coverage; tests: `npm test` → 10/10 pass.
 
 Task 2: Ruling: execute `.mjs` fake fixtures through `process.execPath` on Windows while real `.exe` binaries remain direct `shell:false` children — Windows cannot spawn a script fixture directly with the security-preserving configuration; cost if wrong: only test-fixture execution changes, not production `agy.exe` behavior.
+
+Task 3: complete — setup diagnostics, log scanning, quota/auth/backend errors, and empty-output handling; tests: `npm test` → 15/15 pass.

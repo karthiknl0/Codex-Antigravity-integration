@@ -3,9 +3,18 @@ import process from "node:process";
 import { resolveAgyBin } from "./lib/paths.mjs";
 import { parseArgs } from "./lib/args.mjs";
 import { buildAgyArgs, runAgy } from "./lib/agy.mjs";
+import { formatFailure } from "./lib/logscan.mjs";
 
 const parsed = parseArgs(process.argv.slice(2));
-if (parsed.command !== "ask") {
+if (parsed.command === "setup") {
+  const found = resolveAgyBin();
+  if (!found) {
+    console.log(JSON.stringify({ installed: false, path: null, version: null, authHint: "unknown", warnings: ["agy not found"] }, null, 2));
+  } else {
+    const result = await runAgy({ bin: found.path, args: ["--version"], cwd: process.cwd(), timeoutMs: 5000 });
+    console.log(JSON.stringify({ installed: result.code === 0, path: found.path, source: found.source, version: result.stdout.trim() || result.stderr.trim() || null, authHint: "run agy interactively once if authentication is required", warnings: [] }, null, 2));
+  }
+} else if (parsed.command !== "ask") {
   console.error(`unsupported command: ${parsed.command}`);
   process.exitCode = 64;
 } else if (!parsed.prompt) {
@@ -22,16 +31,7 @@ if (parsed.command !== "ask") {
       args: buildAgyArgs({ prompt: parsed.prompt, printTimeout: parsed.values["print-timeout"] || "10m", logFile: parsed.values["log-file"] }),
       cwd: process.cwd(),
     });
-    if (result.stdout) process.stdout.write(result.stdout);
-    if (result.stderr) process.stderr.write(result.stderr);
-    if (result.timedOut) {
-      console.error("error: agy timed out");
-      process.exitCode = 124;
-    } else if (result.code !== 0) {
-      process.exitCode = result.code ?? 1;
-    } else if (!result.stdout.trim()) {
-      console.error("error: agy returned no output");
-      process.exitCode = 1;
-    }
+    if (result.code === 0 && result.stdout.trim()) process.stdout.write(result.stdout);
+    else { console.error(formatFailure({ result, bin: found.path })); process.exitCode = result.timedOut ? 124 : (result.code || 1); }
   }
 }
