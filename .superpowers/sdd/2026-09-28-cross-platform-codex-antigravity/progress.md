@@ -11,3 +11,5 @@ Task 2: complete — safe foreground runner, argument parsing, timeout and fake 
 Task 2: Ruling: execute `.mjs` fake fixtures through `process.execPath` on Windows while real `.exe` binaries remain direct `shell:false` children — Windows cannot spawn a script fixture directly with the security-preserving configuration; cost if wrong: only test-fixture execution changes, not production `agy.exe` behavior.
 
 Task 3: complete — setup diagnostics, log scanning, quota/auth/backend errors, and empty-output handling; tests: `npm test` → 15/15 pass.
+
+Task 4: complete — external background job state, start/status/result/cancel lifecycle, and process cleanup; tests: `npm test` → 17/17 pass.
