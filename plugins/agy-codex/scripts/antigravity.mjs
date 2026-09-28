@@ -6,6 +6,7 @@ import { buildAgyArgs, runAgy } from "./lib/agy.mjs";
 import { formatFailure } from "./lib/logscan.mjs";
 import { defaultStateDir } from "./lib/paths.mjs";
 import { createJob, startJob, readJob, listJobs, cancelJob } from "./lib/jobs.mjs";
+import { collectDiff } from "./lib/git.mjs";
 
 const parsed = parseArgs(process.argv.slice(2));
 if (parsed.command === "setup") {
@@ -15,6 +16,17 @@ if (parsed.command === "setup") {
   } else {
     const result = await runAgy({ bin: found.path, args: ["--version"], cwd: process.cwd(), timeoutMs: 5000 });
     console.log(JSON.stringify({ installed: result.code === 0, path: found.path, source: found.source, version: result.stdout.trim() || result.stderr.trim() || null, authHint: "run agy interactively once if authentication is required", warnings: [] }, null, 2));
+  }
+} else if (parsed.command === "review") {
+  const found = resolveAgyBin();
+  const diff = collectDiff({ cwd: process.cwd(), base: parsed.values.base }).diff;
+  if (!diff) { console.error("error: no Git diff found; make or stage changes first"); process.exitCode = 1; }
+  else if (!found) { console.error("error: agy was not found; set AGY_BIN or install Antigravity CLI"); process.exitCode = 127; }
+  else {
+    const focus = parsed.prompt || "Review this diff for correctness, security, regressions, and missing tests.";
+    const result = await runAgy({ bin: found.path, args: buildAgyArgs({ prompt: `${focus}\n\nReview only; do not modify files.\n\nGit diff:\n${diff}` }), cwd: process.cwd() });
+    if (result.code === 0 && result.stdout.trim()) process.stdout.write(result.stdout);
+    else { console.error(formatFailure({ result, bin: found.path })); process.exitCode = result.timedOut ? 124 : (result.code || 1); }
   }
 } else if (["start", "status", "result", "cancel"].includes(parsed.command)) {
   const stateDir = defaultStateDir();

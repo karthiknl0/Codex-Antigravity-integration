@@ -1,0 +1,7 @@
+interface:
+  display_name: "Antigravity CLI"
+  short_description: "Ask and delegate work to local Antigravity."
+  default_prompt: "Use $antigravity-cli to ask Antigravity for a second opinion on the current task."
+
+policy:
+  allow_implicit_invocation: true

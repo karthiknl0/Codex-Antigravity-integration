@@ -13,3 +13,5 @@ Task 2: Ruling: execute `.mjs` fake fixtures through `process.execPath` on Windo
 Task 3: complete — setup diagnostics, log scanning, quota/auth/backend errors, and empty-output handling; tests: `npm test` → 15/15 pass.
 
 Task 4: complete — external background job state, start/status/result/cancel lifecycle, and process cleanup; tests: `npm test` → 17/17 pass.
+
+Task 5: complete — Codex skills, implicit invocation metadata, Git diff collection, review command, and result guidance; tests: `npm test` → 19/19 pass.
