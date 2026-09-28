@@ -17,3 +17,7 @@ Task 4: complete — external background job state, start/status/result/cancel l
 Task 5: complete — Codex skills, implicit invocation metadata, Git diff collection, review command, and result guidance; tests: `npm test` → 19/19 pass.
 
 Task 6: complete — integration tests, plugin validator, smoke diagnostic, README, and CLI reference; tests: `npm test` → 21/21 pass; `npm run validate` → valid; `node scripts/smoke.mjs` → expected unavailable because `agy` is not exposed on this Codex process PATH.
+
+Final: fixed detached-job output loss — `detached jobs retain output after the launcher exits` passes; final suite now includes 22 tests.
+
+Final review: self-review (no subagent tool available in this harness). Reviewed plan alignment, process safety, executable discovery, background persistence, failure handling, and documentation.

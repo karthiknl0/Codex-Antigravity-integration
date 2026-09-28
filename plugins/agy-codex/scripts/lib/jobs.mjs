@@ -16,6 +16,18 @@ function writeState(stateDir, state) {
 function readState(stateDir, id) {
   return JSON.parse(fs.readFileSync(statePath(stateDir, id), "utf8"));
 }
+function processAlive(pid) {
+  if (!pid) return false;
+  try { process.kill(pid, 0); return true; } catch { return false; }
+}
+function refreshJob(stateDir, state) {
+  if (state.status !== "running" || processAlive(state.pid)) return state;
+  const stdout = state.stdoutFile && fs.existsSync(state.stdoutFile) ? fs.readFileSync(state.stdoutFile, "utf8") : state.stdout;
+  const stderr = state.stderrFile && fs.existsSync(state.stderrFile) ? fs.readFileSync(state.stderrFile, "utf8") : state.stderr;
+  const finalState = { ...state, status: "done", stdout, stderr, result: stdout || stderr };
+  writeState(stateDir, finalState);
+  return finalState;
+}
 
 export function createJob({ stateDir, cwd, prompt, options = {} }) {
   const id = `agy-${Date.now().toString(36)}-${crypto.randomBytes(4).toString("hex")}`;
@@ -24,7 +36,7 @@ export function createJob({ stateDir, cwd, prompt, options = {} }) {
   return { id, statePath: statePath(stateDir, id), ...state };
 }
 
-export function readJob({ stateDir, id }) { return readState(stateDir, id); }
+export function readJob({ stateDir, id }) { return refreshJob(stateDir, readState(stateDir, id)); }
 
 export function listJobs({ stateDir, cwd }) {
   if (!fs.existsSync(stateDir)) return [];
@@ -36,6 +48,20 @@ export function startJob({ stateDir, id, command, args = [], wait = true, env = 
   if (initial.status !== "pending") return Promise.resolve(initial);
   const outputDir = path.join(stateDir, "output");
   ensureDir(outputDir);
+  if (!wait) {
+    const stdoutFile = path.join(outputDir, `${id}.out`);
+    const stderrFile = path.join(outputDir, `${id}.err`);
+    const stdoutFd = fs.openSync(stdoutFile, "a");
+    const stderrFd = fs.openSync(stderrFile, "a");
+    const child = spawn(command, args, { cwd: initial.cwd, env, shell: false, windowsHide: true, detached: true, stdio: ["ignore", stdoutFd, stderrFd] });
+    fs.closeSync(stdoutFd);
+    fs.closeSync(stderrFd);
+    children.set(id, child);
+    const running = { ...initial, status: "running", pid: child.pid, stdoutFile, stderrFile };
+    writeState(stateDir, running);
+    child.unref();
+    return Promise.resolve(running);
+  }
   const child = spawn(command, args, { cwd: initial.cwd, env, shell: false, windowsHide: true, detached: !wait });
   children.set(id, child);
   const state = { ...initial, status: "running", pid: child.pid };
@@ -57,7 +83,6 @@ export function startJob({ stateDir, id, command, args = [], wait = true, env = 
       resolve(finalState);
     });
   });
-  if (!wait) { child.unref(); return Promise.resolve(readState(stateDir, id)); }
   return done;
 }
 

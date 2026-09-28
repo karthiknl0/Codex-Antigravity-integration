@@ -36,3 +36,20 @@ test("cancelJob marks a running job cancelled", async () => {
   await running;
   assert.equal(readJob({ stateDir, id: job.id }).status, "cancelled");
 });
+
+test("detached jobs retain output after the launcher exits", async () => {
+  const root = fixture();
+  const stateDir = path.join(root, "state");
+  const script = path.join(root, "quick.mjs");
+  fs.writeFileSync(script, "console.log('detached output')");
+  const job = createJob({ stateDir, cwd: root, prompt: "quick" });
+  await startJob({ ...job, command: process.execPath, args: [script], wait: false });
+  let result;
+  for (let attempt = 0; attempt < 20; attempt += 1) {
+    await new Promise((resolve) => setTimeout(resolve, 25));
+    result = readJob({ stateDir, id: job.id });
+    if (result.status === "done") break;
+  }
+  assert.equal(result.status, "done");
+  assert.match(result.result, /detached output/);
+});
