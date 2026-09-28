@@ -5,3 +5,7 @@ Pre-flight: Task 1 produces `resolveAgyBin` and `defaultStateDir`, consumed by T
 Ruling: use manual Windows ledger setup because the provided Unix helper failed to attach its WSL disk; the implementation workspace remains this explicitly authorized repository checkout.
 
 Task 1: complete — executable/state resolution and Codex packaging scaffold; tests: `node --test plugins/agy-codex/tests/paths.test.mjs` → 5/5 pass.
+
+Task 2: complete — safe foreground runner, argument parsing, timeout and fake executable coverage; tests: `npm test` → 10/10 pass.
+
+Task 2: Ruling: execute `.mjs` fake fixtures through `process.execPath` on Windows while real `.exe` binaries remain direct `shell:false` children — Windows cannot spawn a script fixture directly with the security-preserving configuration; cost if wrong: only test-fixture execution changes, not production `agy.exe` behavior.
