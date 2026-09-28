@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
-import { spawn } from "node:child_process";
+import { spawn, spawnSync } from "node:child_process";
 
 const children = new Map();
 
@@ -19,6 +19,30 @@ function readState(stateDir, id) {
 function processAlive(pid) {
   if (!pid) return false;
   try { process.kill(pid, 0); return true; } catch { return false; }
+}
+// Image name of a live pid, or null if it cannot be determined.
+function processImage(pid) {
+  if (process.platform === "win32") {
+    const r = spawnSync("tasklist", ["/FI", `PID eq ${pid}`, "/FO", "CSV", "/NH"], { encoding: "utf8", windowsHide: true });
+    const m = r.stdout?.match(/^"([^"]+)","(\d+)"/m);
+    return m && Number(m[2]) === pid ? m[1] : null;
+  }
+  const r = spawnSync("ps", ["-p", String(pid), "-o", "comm="], { encoding: "utf8" });
+  return r.status === 0 && r.stdout.trim() ? path.basename(r.stdout.trim()) : null;
+}
+function sameImage(actual, expected) {
+  if (!actual) return false;
+  const a = actual.toLowerCase();
+  const e = expected.toLowerCase();
+  return a === e || (a.length >= 15 && e.startsWith(a)); // ps truncates comm to 15 chars
+}
+// Kill the job's whole tree so any helper processes agy started go with it.
+function killTree(pid) {
+  if (process.platform === "win32") {
+    return spawnSync("taskkill", ["/PID", String(pid), "/T", "/F"], { windowsHide: true }).status === 0;
+  }
+  try { process.kill(-pid, "SIGTERM"); return true; } catch { /* not a group leader */ }
+  try { process.kill(pid, "SIGTERM"); return true; } catch { return false; }
 }
 function refreshJob(stateDir, state) {
   if (state.status !== "running" || processAlive(state.pid)) return state;
@@ -57,14 +81,14 @@ export function startJob({ stateDir, id, command, args = [], wait = true, env = 
     fs.closeSync(stdoutFd);
     fs.closeSync(stderrFd);
     children.set(id, child);
-    const running = { ...initial, status: "running", pid: child.pid, stdoutFile, stderrFile };
+    const running = { ...initial, status: "running", pid: child.pid, image: path.basename(command), stdoutFile, stderrFile };
     writeState(stateDir, running);
     child.unref();
     return Promise.resolve(running);
   }
   const child = spawn(command, args, { cwd: initial.cwd, env, shell: false, windowsHide: true, detached: !wait });
   children.set(id, child);
-  const state = { ...initial, status: "running", pid: child.pid };
+  const state = { ...initial, status: "running", pid: child.pid, image: path.basename(command) };
   writeState(stateDir, state);
   let stdout = "";
   let stderr = "";
@@ -86,11 +110,33 @@ export function startJob({ stateDir, id, command, args = [], wait = true, env = 
   return done;
 }
 
+// Jobs recorded before `image` existed always ran the agy binary.
+function imageMatches(pid, expected) {
+  if (expected) return sameImage(processImage(pid), expected);
+  return /^agy/i.test(processImage(pid) || "");
+}
+
+// cancel usually runs in a different CLI process from start, so the in-memory
+// children map is empty here — kill by the pid recorded in the job state.
+// Known limit: the pid could be recycled between the image check and the kill;
+// a separate process cannot hold a handle to close that window.
 export function cancelJob({ stateDir, id }) {
   const current = readState(stateDir, id);
-  if (current.status === "running") {
-    children.get(id)?.kill("SIGTERM");
-    writeState(stateDir, { ...current, status: "cancelled", cancelledAt: new Date().toISOString() });
+  if (current.status !== "running") return current;
+  const cancelledAt = new Date().toISOString();
+  if (!processAlive(current.pid)) {
+    writeState(stateDir, { ...current, status: "cancelled", cancelledAt, cancelNote: "process already exited" });
+  } else if (!imageMatches(current.pid, current.image)) {
+    // pid was reused by an unrelated process; never kill it.
+    writeState(stateDir, { ...current, status: "cancelled", cancelledAt, cancelNote: `pid ${current.pid} not killed: live process is not ${current.image || "agy"}` });
+  } else if (killTree(current.pid)) {
+    writeState(stateDir, { ...current, status: "cancelled", cancelledAt, cancelNote: `killed pid ${current.pid} and its children` });
+  } else if (!processAlive(current.pid)) {
+    // taskkill fails if the process exited on its own just before the kill.
+    writeState(stateDir, { ...current, status: "cancelled", cancelledAt, cancelNote: "process exited before it could be killed" });
+  } else {
+    // Leave it running so status never claims a cancel that did not happen.
+    writeState(stateDir, { ...current, cancelNote: `kill of pid ${current.pid} failed; process still running` });
   }
   return readState(stateDir, id);
 }

@@ -5,6 +5,17 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [Unreleased]
+
+### Fixed
+- agy-codex `cancel`: actually stop the background job. It ran in a separate
+  process from `start`, so the in-memory child map was empty and it only marked
+  the job cancelled while `agy.exe` kept running. Cancel now kills the recorded
+  pid's process tree (`taskkill /T /F` on Windows, process group on POSIX),
+  first checking the live process image matches the job (`agy*` for job records
+  written before `image` was stored) so a reused pid is never killed. A failed
+  kill of a live process leaves the job `running` with a `cancelNote`.
+
 ## [0.4.1] - 2026-05-27
 
 ### Fixed
