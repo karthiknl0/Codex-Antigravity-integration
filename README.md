@@ -13,9 +13,34 @@ The plugin does not install software or authenticate your Google account. Run `a
 
 ## Install locally
 
+From a local checkout, run one command from the repository root:
+
+```text
+node scripts/install.mjs
+```
+
+That registers the local marketplace and installs `agy-codex` for the current Codex user.
+
+If you prefer the explicit commands:
+
 ```text
 codex plugin marketplace add C:\path\to\antigravity-codex-plugin
 codex plugin add agy-codex@local-antigravity
+```
+
+### Install Antigravity CLI
+
+The Codex plugin requires the standalone `agy` CLI; having only the Antigravity IDE is not enough.
+On Windows, install it with the same command used for this setup:
+
+```powershell
+irm https://antigravity.google/cli/install.ps1 | iex
+```
+
+Restart PowerShell after installation, then run `agy` once if authentication is requested. Verify with:
+
+```text
+agy --version
 ```
 
 For a Git checkout:

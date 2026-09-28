@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "install:plugin": "node scripts/install.mjs",
     "test": "node --test plugins/agy-codex/tests/*.test.mjs",
     "validate": "node scripts/validate.mjs"
   },
