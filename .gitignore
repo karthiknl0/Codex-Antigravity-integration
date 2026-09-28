@@ -13,3 +13,13 @@ articles/
 .antigravitycli/
 .playwright-cli/
 .notes/
+
+# Codex and repository-analysis scratch output.
+.superpowers/sdd/
+graphify-out/
+
+# Local Antigravity/Codex state and machine-specific configuration.
+.agy-state/
+.codex/
+.gemini/
+.antigravity-ide/
