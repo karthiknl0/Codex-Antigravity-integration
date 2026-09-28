@@ -1,0 +1,6 @@
+{
+  "name": "agy-codex-runtime",
+  "private": true,
+  "type": "module",
+  "engines": { "node": ">=18.18" }
+}

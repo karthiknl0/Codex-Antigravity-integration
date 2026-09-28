@@ -1,0 +1,13 @@
+{
+  "name": "local-antigravity",
+  "interface": { "displayName": "Local Antigravity plugins" },
+  "plugins": [
+    {
+      "name": "agy-codex",
+      "source": { "source": "local", "path": "./plugins/agy-codex" },
+      "policy": { "installation": "AVAILABLE", "authentication": "ON_INSTALL" },
+      "category": "Productivity",
+      "interface": { "displayName": "Antigravity for Codex" }
+    }
+  ]
+}

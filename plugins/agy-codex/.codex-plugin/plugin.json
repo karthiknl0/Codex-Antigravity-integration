@@ -1,0 +1,6 @@
+{
+  "name": "agy-codex",
+  "version": "0.1.0",
+  "description": "Ask and delegate work to a local Google Antigravity CLI from Codex.",
+  "skills": "./skills/"
+}
