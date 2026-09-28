@@ -36,7 +36,7 @@ Review the current diff with Antigravity.
 Delegate this investigation to Antigravity in the background.
 ```
 
-The bundled runtime also supports `setup`, `ask`, `review`, `start`, `status`, `result`, and `cancel`.
+The bundled runtime also supports `setup`, `ask`, `review`, `start`, `status`, `result`, and `cancel`. For headless prompts that need Antigravity to execute tools, pass `--dangerously-skip-permissions` explicitly; otherwise Antigravity may stop at an interactive permission prompt.
 
 ## If Antigravity works in the IDE but Codex cannot find it
 

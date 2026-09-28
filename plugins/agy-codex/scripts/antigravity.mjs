@@ -37,7 +37,7 @@ if (parsed.command === "setup") {
       if (!found) { console.error("error: agy was not found; set AGY_BIN or install Antigravity CLI"); process.exitCode = 127; }
       else {
         const job = createJob({ stateDir, cwd: process.cwd(), prompt: parsed.prompt });
-        await startJob({ ...job, command: found.path, args: buildAgyArgs({ prompt: parsed.prompt, printTimeout: parsed.values["print-timeout"] || "10m", logFile: pathForJob(stateDir, job.id) }), wait: false });
+        await startJob({ ...job, command: found.path, args: buildAgyArgs({ prompt: parsed.prompt, printTimeout: parsed.values["print-timeout"] || "10m", logFile: pathForJob(stateDir, job.id), dangerouslySkipPermissions: parsed.flags["dangerously-skip-permissions"] }), wait: false });
         console.log(job.id);
       }
     }
@@ -62,7 +62,7 @@ if (parsed.command === "setup") {
   } else {
     const result = await runAgy({
       bin: found.path,
-      args: buildAgyArgs({ prompt: parsed.prompt, printTimeout: parsed.values["print-timeout"] || "10m", logFile: parsed.values["log-file"] }),
+      args: buildAgyArgs({ prompt: parsed.prompt, printTimeout: parsed.values["print-timeout"] || "10m", logFile: parsed.values["log-file"], dangerouslySkipPermissions: parsed.flags["dangerously-skip-permissions"] }),
       cwd: process.cwd(),
     });
     if (result.code === 0 && result.stdout.trim()) process.stdout.write(result.stdout);

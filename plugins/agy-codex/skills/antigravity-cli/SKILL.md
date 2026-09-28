@@ -11,6 +11,7 @@ Use the bundled Node companion at `${PLUGIN_ROOT}/scripts/antigravity.mjs` for a
 
 - “Check my Antigravity setup” → `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" setup`
 - “Ask Antigravity…” or “get a second opinion…” → `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" ask -- <prompt>`
+- If the user explicitly authorizes unattended tool execution, add `--dangerously-skip-permissions` before `--`.
 - “Review the current diff with Antigravity” → `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" review -- <optional focus>`
 - “Delegate this to Antigravity” → use `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" start -- <task>` for long work, then report the job id and use `status`/`result`.
 - “Cancel the Antigravity job” → `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" cancel <job-id>`.

@@ -1,9 +1,10 @@
 import { spawn } from "node:child_process";
 import path from "node:path";
 
-export function buildAgyArgs({ prompt, printTimeout = "10m", logFile, conversation } = {}) {
+export function buildAgyArgs({ prompt, printTimeout = "10m", logFile, conversation, dangerouslySkipPermissions = false } = {}) {
   if (!prompt) throw new Error("prompt is required");
   const args = ["-p", prompt, "--print-timeout", printTimeout];
+  if (dangerouslySkipPermissions) args.push("--dangerously-skip-permissions");
   if (logFile) args.push("--log-file", logFile);
   if (conversation) args.push("--conversation", conversation);
   return args;
