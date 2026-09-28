@@ -15,3 +15,5 @@ Task 3: complete — setup diagnostics, log scanning, quota/auth/backend errors,
 Task 4: complete — external background job state, start/status/result/cancel lifecycle, and process cleanup; tests: `npm test` → 17/17 pass.
 
 Task 5: complete — Codex skills, implicit invocation metadata, Git diff collection, review command, and result guidance; tests: `npm test` → 19/19 pass.
+
+Task 6: complete — integration tests, plugin validator, smoke diagnostic, README, and CLI reference; tests: `npm test` → 21/21 pass; `npm run validate` → valid; `node scripts/smoke.mjs` → expected unavailable because `agy` is not exposed on this Codex process PATH.

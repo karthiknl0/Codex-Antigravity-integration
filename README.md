@@ -1,215 +1,79 @@
-# agy — Antigravity CLI plugin for Claude Code
+# Antigravity for Codex
 
-Use Google's [Antigravity CLI (`agy`)](https://antigravity.google/) from
-inside Claude Code. Delegate tasks to the `agy:runner` subagent, run quick
-prompts, or get a second-opinion code review — without leaving your editor.
-
-This plugin is for Claude Code users who already use (or want to start using)
-Antigravity and want a smooth way to call it from the workflow they already
-have. Intentionally small: no Node runtime, no broker, no review-gate hook —
-just Bash and `agy`.
-
-## What you get
-
-- **`/agy:setup`** — verify `agy` is installed and authenticated; can install
-  it for you if it is missing.
-- **`/agy:ask [--model <alias>] <prompt>`** — one-shot prompt through `agy -p`;
-  returns the raw response.
-- **`/agy:delegate [--background] [--model <alias>] <task>`** — hand a task
-  to the `agy:runner` subagent. `--background` for long jobs.
-- **`/agy:research [--background] [--model <alias>] <topic>`** — delegate a
-  deep-research investigation; wraps the topic in a structured prompt and
-  routes through `agy:runner`.
-- **`/agy:image <description>`** — generate an image with `agy`'s built-in
-  `generate_image` tool (Imagen under the hood). Optional `--name` and
-  `--output`.
-- **`/agy:review [focus]`** — ask Antigravity to review your current
-  `git diff`.
-- **`/agy:help`** — show all commands, supported `--model` aliases, and
-  canonical model names.
-- **`agy:runner` subagent** — thin forwarding wrapper around the Antigravity
-  CLI; available as `subagent_type: "agy:runner"` for programmatic
-  delegation.
+Cross-platform Codex integration for Google's local Antigravity CLI (`agy`). Ask Antigravity for a second opinion, review a Git diff, or delegate a longer task without leaving Codex.
 
 ## Requirements
 
-- **Claude Code** with plugin-marketplace support
-  (`/plugin marketplace add …`).
-- **Antigravity CLI (`agy`)** installed locally. `/agy:setup` can install it
-  on first run.
-- **Auth** for `agy`: either OAuth cached in the system keyring (after one
-  interactive run of `agy`) or `ANTIGRAVITY_API_KEY` exported in your shell.
-- **Bash** and **git** in `PATH`. macOS, Linux, or WSL.
+- Codex with plugin support
+- Node.js 18.18 or newer
+- Antigravity CLI installed and authenticated
+- Git for diff review
 
-## Install
+The plugin does not install software or authenticate your Google account. Run `agy` interactively once to finish sign-in.
 
-In Claude Code, run these three slash commands in order:
+## Install locally
 
 ```text
-/plugin marketplace add simplybychris/antigravity-plugin-cc
-/plugin install agy@antigravity-cc
-/reload-plugins
+codex plugin marketplace add C:\path\to\antigravity-codex-plugin
+codex plugin add agy-codex@local-antigravity
 ```
 
-Then verify everything is wired up:
+For a Git checkout:
 
 ```text
-/agy:setup
+codex plugin marketplace add https://github.com/YOUR_ACCOUNT/antigravity-codex-plugin
+codex plugin add agy-codex@local-antigravity
 ```
 
-If `agy` is missing, `/agy:setup` offers to install it via the official
-installer:
+Restart Codex or start a new task after installing the plugin.
+
+## Use it naturally
+
+```text
+Check my Antigravity setup.
+Ask Antigravity for a second opinion on this implementation.
+Review the current diff with Antigravity.
+Delegate this investigation to Antigravity in the background.
+```
+
+The bundled runtime also supports `setup`, `ask`, `review`, `start`, `status`, `result`, and `cancel`.
+
+## If Antigravity works in the IDE but Codex cannot find it
+
+Set the executable explicitly for the Codex process:
+
+```powershell
+$env:AGY_BIN = 'C:\path\to\agy.exe'
+```
+
+On macOS/Linux:
 
 ```bash
-curl -fsSL https://antigravity.google/cli/install.sh | bash
+export AGY_BIN=/path/to/agy
 ```
 
-If `agy` is installed but not logged in, run `agy` once interactively in your
-terminal to complete OAuth — or export `ANTIGRAVITY_API_KEY`.
+The resolver also checks `PATH`, `%LOCALAPPDATA%\agy\bin\agy.exe`, `~/.local/bin/agy`, `/opt/antigravity/bin/agy`, and `/usr/local/bin/agy`.
 
-## Usage
+## Safety and limitations
 
-### Ask a quick question
+Prompts are passed as process arguments with `shell:false`; they are never interpolated into a shell command. Review mode asks Antigravity not to modify files. Delegated work may modify the workspace and is clearly reported as such. The plugin does not assume a per-call model flag because current `agy` versions select the model from Antigravity configuration.
+
+Antigravity can return exit code 0 with empty output when quota or backend failures occur. The runtime treats that as an error and reports available diagnostic signals.
+
+## Development
 
 ```text
-/agy:ask explain the difference between Go channels and Rust async in one paragraph
+npm test
+npm run validate
+node scripts/smoke.mjs
 ```
 
-Returns Antigravity's response verbatim.
+Tests use fake `agy` executables and do not require a Google account.
 
-### Delegate a task to the `agy:runner` subagent
+## References
 
-```text
-/agy:delegate refactor the SQL queries in src/db/queries.go to use prepared statements
-```
+- Original Claude Code wrapper: `simplybychris/antigravity-plugin-cc`
+- Cross-platform runtime reference: `Idun-Group/antigravity-plugin-cc`
+- Codex plugin packaging: https://developers.openai.com/plugins/build/plugins
 
-For long tasks, run in the background and let Claude Code notify you when it
-finishes:
-
-```text
-/agy:delegate --background investigate why integration tests are flaky in CI
-```
-
-You can also delegate by talking to Claude:
-
-```text
-Ask agy to look at this file and suggest a simpler design.
-```
-
-The plugin's selection rules route through the `agy:runner` subagent
-automatically.
-
-### Review the current diff
-
-Stage or make some changes, then:
-
-```text
-/agy:review
-/agy:review focus on error handling and concurrency safety
-```
-
-### Pick a specific model
-
-```text
-/agy:delegate --model sonnet fix the off-by-one in pagination
-/agy:delegate --model pro write a high-coverage test for the cache layer
-/agy:ask --model opus "explain Go's escape analysis"
-```
-
-Supported aliases: `flash-low`, `flash-medium`, `flash`, `pro-low`, `pro`,
-`sonnet`, `opus`, `gpt-oss`. The canonical TUI strings (e.g.
-`"Claude Opus 4.6 (Thinking)"`) are also accepted. Run `/agy:help` for the
-full table.
-
-If no `--model` is given, the wrapper uses whatever the TUI is currently set
-to — stored in `~/.gemini/antigravity-cli/settings.json`. Project-local
-`AGENTS.md` and `GEMINI.md` files are read directly by `agy` and unaffected
-by this plugin.
-
-### Delegate a deep research investigation
-
-```text
-/agy:research what's the current state of WebGPU support across browsers in 2026?
-/agy:research --background --model opus survey post-quantum signature schemes used in TLS
-```
-
-The command wraps your topic in a research-oriented preamble (background,
-key findings, caveats, sources) and delegates to `agy:runner`. Long
-investigations work well in `--background`.
-
-### Generate an image
-
-```text
-/agy:image a minimalist dark-mode login mockup, blue accent color
-/agy:image --name hero --output ./assets/hero.png isometric illustration of a developer at a desk
-```
-
-Triggers `agy`'s built-in `generate_image` tool. The image is written to
-the Antigravity artifacts dir (e.g.
-`~/.gemini/antigravity-cli/brain/<uuid>/<name>.png`). Pass `--output` if
-you want the wrapper to copy it next to your project.
-
-## How it works
-
-Under the hood, the plugin is a thin wrapper around your local `agy` install:
-
-```
-Claude Code  →  /agy:*  →  agy:runner subagent  →  agy-run.sh  →  agy -p "..."
-```
-
-- The plugin does **not** ship its own Antigravity runtime — it uses your
-  local `agy` binary, your local auth, and your local config.
-- The wrapper script
-  ([`plugins/agy/scripts/agy-run.sh`](./plugins/agy/scripts/agy-run.sh))
-  handles binary discovery, auth detection, and exit codes.
-- The `agy:runner` subagent is a *forwarder*: it invokes the wrapper exactly
-  once per request and returns Antigravity's output verbatim. No
-  reinterpretation.
-
-## Configuration
-
-`agy` stores its preferences (selected model, theme, telemetry, trusted
-workspaces) in `~/.gemini/antigravity-cli/settings.json`. Project-local
-`AGENTS.md` / `GEMINI.md` files are read directly by `agy`. This plugin
-doesn't override or shadow any of that — drop config files where `agy`
-expects them and they'll be picked up.
-
-The `--model <alias>` flag on `/agy:ask`, `/agy:delegate`, and `/agy:research`
-swaps in your requested model for the duration of a single call (under a
-lockfile, with automatic restore on exit) and leaves the TUI's selected
-model intact for subsequent runs.
-
-## FAQ
-
-### Do I need an Antigravity subscription?
-
-You need whatever account `agy` accepts: Google AI Pro, Ultra, Code Assist
-Standard/Enterprise, or an enterprise GCP project. See the
-[Antigravity docs](https://antigravity.google/docs/cli-overview) for details.
-
-### Does this plugin send data anywhere other than what `agy` sends?
-
-No. The plugin runs `agy` locally over a Bash wrapper. The wrapper only reads
-filesystem paths and your shell environment. Your prompts go directly to
-Google through `agy`'s normal channels.
-
-### Can I keep using Antigravity outside this plugin?
-
-Yes — the plugin uses your local install. Running `agy` directly in a
-terminal keeps working exactly as before.
-
-### Why a subagent instead of just a slash command?
-
-Subagents in Claude Code can run in the background and report back when
-finished. That is the workflow you want when you "hand this off to another
-model and keep working" — which is the whole point of delegating to `agy`.
-
-## Inspiration
-
-Inspired by
-[`openai/codex-plugin-cc`](https://github.com/openai/codex-plugin-cc), which
-does the same thing for Codex. This plugin is intentionally smaller.
-
-## License
-
-[MIT](./LICENSE).
+MIT License.
