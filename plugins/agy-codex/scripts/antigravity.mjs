@@ -24,7 +24,7 @@ if (parsed.command === "setup") {
   else if (!found) { console.error("error: agy was not found; set AGY_BIN or install Antigravity CLI"); process.exitCode = 127; }
   else {
     const focus = parsed.prompt || "Review this diff for correctness, security, regressions, and missing tests.";
-    const result = await runAgy({ bin: found.path, args: buildAgyArgs({ prompt: `${focus}\n\nReview only; do not modify files.\n\nGit diff:\n${diff}` }), cwd: process.cwd() });
+    const result = await runAgy({ bin: found.path, args: buildAgyArgs({ prompt: `${focus}\n\nReview only; do not modify files.\n\nGit diff:\n${diff}`, model: parsed.values.model }), cwd: process.cwd() });
     if (result.code === 0 && result.stdout.trim()) process.stdout.write(result.stdout);
     else { console.error(formatFailure({ result, bin: found.path })); process.exitCode = result.timedOut ? 124 : (result.code || 1); }
   }
@@ -37,7 +37,7 @@ if (parsed.command === "setup") {
       if (!found) { console.error("error: agy was not found; set AGY_BIN or install Antigravity CLI"); process.exitCode = 127; }
       else {
         const job = createJob({ stateDir, cwd: process.cwd(), prompt: parsed.prompt });
-        await startJob({ ...job, command: found.path, args: buildAgyArgs({ prompt: parsed.prompt, printTimeout: parsed.values["print-timeout"] || "10m", logFile: pathForJob(stateDir, job.id), dangerouslySkipPermissions: parsed.flags["dangerously-skip-permissions"] }), wait: false });
+        await startJob({ ...job, command: found.path, args: buildAgyArgs({ prompt: parsed.prompt, printTimeout: parsed.values["print-timeout"] || "10m", logFile: pathForJob(stateDir, job.id), model: parsed.values.model, dangerouslySkipPermissions: parsed.flags["dangerously-skip-permissions"] }), wait: false });
         console.log(job.id);
       }
     }
@@ -62,7 +62,7 @@ if (parsed.command === "setup") {
   } else {
     const result = await runAgy({
       bin: found.path,
-      args: buildAgyArgs({ prompt: parsed.prompt, printTimeout: parsed.values["print-timeout"] || "10m", logFile: parsed.values["log-file"], dangerouslySkipPermissions: parsed.flags["dangerously-skip-permissions"] }),
+      args: buildAgyArgs({ prompt: parsed.prompt, printTimeout: parsed.values["print-timeout"] || "10m", logFile: parsed.values["log-file"], model: parsed.values.model, dangerouslySkipPermissions: parsed.flags["dangerously-skip-permissions"] }),
       cwd: process.cwd(),
     });
     if (result.code === 0 && result.stdout.trim()) process.stdout.write(result.stdout);

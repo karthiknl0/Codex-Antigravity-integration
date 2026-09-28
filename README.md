@@ -63,6 +63,16 @@ Delegate this investigation to Antigravity in the background.
 
 The bundled runtime also supports `setup`, `ask`, `review`, `start`, `status`, `result`, and `cancel`. For headless prompts that need Antigravity to execute tools, pass `--dangerously-skip-permissions` explicitly; otherwise Antigravity may stop at an interactive permission prompt.
 
+### Choose a model
+
+The plugin uses Antigravity's configured default unless you provide a model ID. List models with `agy models`, then pass one explicitly:
+
+```text
+node scripts/antigravity.mjs ask --model gemini-3.8-flash-low -- "Compare these two approaches."
+```
+
+The `--model` option is passed through only when requested, so older CLI versions retain the previous default behavior but may reject explicit model selection if they do not expose the flag.
+
 ## If Antigravity works in the IDE but Codex cannot find it
 
 Set the executable explicitly for the Codex process:

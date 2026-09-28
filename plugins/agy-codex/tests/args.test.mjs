@@ -9,7 +9,8 @@ test("parseArgs preserves a prompt beginning with a dash after --", () => {
 });
 
 test("parseArgs separates runtime flags from prompt text", () => {
-  const parsed = parseArgs(["ask", "--print-timeout", "90s", "review this", "file"]);
+  const parsed = parseArgs(["ask", "--print-timeout", "90s", "--model", "gemini-3.8-flash-low", "review this", "file"]);
   assert.equal(parsed.values["print-timeout"], "90s");
+  assert.equal(parsed.values.model, "gemini-3.8-flash-low");
   assert.equal(parsed.prompt, "review this file");
 });

@@ -17,6 +17,9 @@ test("buildAgyArgs keeps prompt as one argument and includes print diagnostics",
   assert.deepEqual(buildAgyArgs({ prompt, dangerouslySkipPermissions: true }), [
     "-p", prompt, "--print-timeout", "10m", "--dangerously-skip-permissions",
   ]);
+  assert.deepEqual(buildAgyArgs({ prompt, model: "gemini-3.8-flash-low" }), [
+    "-p", prompt, "--print-timeout", "10m", "--model", "gemini-3.8-flash-low",
+  ]);
 });
 
 test("runAgy preserves arbitrary prompt text for a fake executable", async () => {

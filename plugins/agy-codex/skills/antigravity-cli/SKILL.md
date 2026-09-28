@@ -12,6 +12,7 @@ Use the bundled Node companion at `${PLUGIN_ROOT}/scripts/antigravity.mjs` for a
 - “Check my Antigravity setup” → `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" setup`
 - “Ask Antigravity…” or “get a second opinion…” → `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" ask -- <prompt>`
 - If the user explicitly authorizes unattended tool execution, add `--dangerously-skip-permissions` before `--`.
+- If the user requests a specific model, first use `agy models` to confirm the model ID, then add `--model <id>` before `--`.
 - “Review the current diff with Antigravity” → `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" review -- <optional focus>`
 - “Delegate this to Antigravity” → use `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" start -- <task>` for long work, then report the job id and use `status`/`result`.
 - “Cancel the Antigravity job” → `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" cancel <job-id>`.
@@ -22,4 +23,4 @@ Run from the user’s repository so Antigravity sees the intended working direct
 
 Review is read-only: include “Review only; do not modify files.” Delegation may edit the workspace; tell the user when that is the requested mode. Never add dangerous permission-bypass flags automatically. The plugin does not authenticate or install Antigravity.
 
-`agy` does not provide a stable per-call model flag. Tell users to select the model inside Antigravity if they need a different model.
+Current `agy` versions expose `--model` and `agy models`; pass `--model <id>` only when the user requests it. If an older CLI rejects that flag, fall back to the configured Antigravity model.

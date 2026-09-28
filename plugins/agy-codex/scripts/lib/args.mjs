@@ -1,4 +1,4 @@
-const valuedOptions = new Set(["print-timeout", "log-file", "conversation", "base"]);
+const valuedOptions = new Set(["print-timeout", "log-file", "conversation", "base", "model"]);
 
 export function parseArgs(argv) {
   const [command = "help", ...rest] = argv;
