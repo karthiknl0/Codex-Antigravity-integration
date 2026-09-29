@@ -20,3 +20,21 @@ test("scanAgyLog ignores unrelated text", () => {
     conversationId: null, quota: null, auth: false, backend: false, messages: [],
   });
 });
+
+test("scanAgyLog does not treat a routine agy log as a failure (2026-09-29 false 'quota exhausted')", () => {
+  const routine = [
+    "I0929 19:22:33.940752       1 printmode.go:181] Print mode: starting (promptLength=856, model=\"gemini-3.8-flash-medium\")",
+    "I0929 19:22:36.827033     249 quota_manager.go:45] doRefreshQuota: starting reload (force=true)",
+    "I0929 19:22:43.380701     500 http_helpers.go:307] URL: https://daily-cloudcode-pa.googleapis.com/v1internal:streamGenerateContent?alt=sse",
+    "E0929 19:22:33.941263     206 errorreport.go:224] error getting token source: You are not logged into Antigravity.",
+  ].join("\n");
+  assert.deepEqual(scanAgyLog(routine), {
+    conversationId: null, quota: null, auth: false, backend: false, messages: [],
+  });
+});
+
+test("scanAgyLog still reports a real quota error and an explicit 5xx", () => {
+  const real = "E0929 10:00:00.000000 1 log.go:1] agent executor error: RESOURCE_EXHAUSTED: Individual quota reached. Resets in 2h3m";
+  assert.match(scanAgyLog(real).quota, /RESOURCE_EXHAUSTED/);
+  assert.equal(scanAgyLog("E0929 10:00:00.000000 1 x.go:1] upstream returned HTTP 503").backend, true);
+});

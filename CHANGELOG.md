@@ -8,6 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Fixed
+- agy-codex log scanner (`logscan.mjs`): stop misreading routine agy log lines as failures. The
+  scanner ran its auth/backend regexes over the whole log, so a bare `\b5\d\d\b` matched glog thread
+  ids such as `500 http_helpers.go` and the word `backend`/`quota` in routine INFO lines
+  (`quota_manager.go … doRefreshQuota`) — a slow or still-running job with empty stdout was reported as
+  a backend/quota failure although the account had quota left (seen 2026-09-29: 90% of the 5-hour
+  and 78% of the weekly Gemini allowance remaining). Only error-severity glog lines (E/F) and non-glog
+  lines are classified now; INFO/WARNING lines are skipped and a 5xx signal needs an HTTP/status/code
+  context. A real `RESOURCE_EXHAUSTED … Resets in …` line still reports quota with its reset time.
+  Regression tests added.
 - agy-codex `cancel`: actually stop the background job. It ran in a separate
   process from `start`, so the in-memory child map was empty and it only marked
   the job cancelled while `agy.exe` kept running. Cancel now kills the recorded

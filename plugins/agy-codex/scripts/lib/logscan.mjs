@@ -1,12 +1,27 @@
 const uuidPattern = /\b[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}\b/i;
 
+// agy writes glog-style lines. Routine INFO/WARNING lines ("I0929 19:22:33 500 http_helpers.go:307 ...",
+// "quota_manager.go ... doRefreshQuota", thread ids like 500) must not be read as failure signals:
+// a bare `\b5\d\d\b` matched thread ids and the word "quota"/"backend" appeared in routine info lines,
+// so a still-running or merely slow job could be reported as a backend/auth failure. Only error-severity
+// glog lines (E/F) and non-glog lines are classified; 5xx needs an explicit HTTP/status/code context.
+const glogInfoOrWarn = /^[IW]\d{4}\s/;
+const authSignal = /auth(?:entication|orization)\s+(?:required|failed|error)|not signed in|login required|unauthenticated/i;
+const backendSignal = /backend|service unavailable|(?:http|status|code)\D{0,3}5\d\d\b|\b5\d\d\s+(?:internal|bad gateway|service|gateway)|internal error/i;
+
+function classifiableLines(text) {
+  return text.split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !glogInfoOrWarn.test(line));
+}
+
 export function scanAgyLog(text = "") {
   const conversationId = text.match(uuidPattern)?.[0] ?? null;
-  const quotaMatch = text.match(/RESOURCE_EXHAUSTED[^\r\n]*/i);
-  const auth = /auth(?:entication|orization)|not signed in|login required|unauthenticated/i.test(text);
-  const backend = /backend|service unavailable|\b5\d\d\b|internal error/i.test(text);
-  const messages = text.split(/\r?\n/).map((line) => line.trim()).filter((line) => {
-    return /RESOURCE_EXHAUSTED|auth(?:entication|orization)|not signed in|login required|unauthenticated|backend|service unavailable|\b5\d\d\b|internal error/i.test(line);
+  const lines = classifiableLines(text);
+  const joined = lines.join("\n");
+  const quotaMatch = joined.match(/RESOURCE_EXHAUSTED[^\r\n]*/i);
+  const auth = authSignal.test(joined);
+  const backend = backendSignal.test(joined);
+  const messages = lines.filter((line) => {
+    return /RESOURCE_EXHAUSTED/i.test(line) || authSignal.test(line) || backendSignal.test(line);
   });
   return { conversationId, quota: quotaMatch?.[0] ?? null, auth, backend, messages };
 }
