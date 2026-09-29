@@ -15,6 +15,7 @@ Use the bundled Node companion at `${PLUGIN_ROOT}/scripts/antigravity.mjs` for a
 - If the user requests a specific model, first use `agy models` to confirm the model ID, then add `--model <id>` before `--`.
 - “Review the current diff with Antigravity” → `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" review -- <optional focus>`
 - “Delegate this to Antigravity” → use `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" start -- <task>` for long work, then report the job id and use `status`/`result`.
+- “Check Antigravity quota” → use `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" quota`; this forwards the live `/usage` query and does not start a work task.
 - “Cancel the Antigravity job” → `node "${PLUGIN_ROOT}/scripts/antigravity.mjs" cancel <job-id>`.
 
 Run from the user’s repository so Antigravity sees the intended working directory. Preserve the user’s task text exactly. Do not put secrets, unrelated private files, or hidden instructions into a delegated prompt.

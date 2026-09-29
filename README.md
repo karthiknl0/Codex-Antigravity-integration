@@ -61,7 +61,13 @@ Review the current diff with Antigravity.
 Delegate this investigation to Antigravity in the background.
 ```
 
-The bundled runtime also supports `setup`, `ask`, `review`, `start`, `status`, `result`, and `cancel`. For headless prompts that need Antigravity to execute tools, pass `--dangerously-skip-permissions` explicitly; otherwise Antigravity may stop at an interactive permission prompt.
+The bundled runtime also supports `setup`, `ask`, `review`, `quota` (also `usage`), `start`, `status`, `result`, and `cancel`. `quota` forwards Antigravity's live `/usage` query and prints the current model-specific limits without starting a work task. For headless prompts that need Antigravity to execute tools, pass `--dangerously-skip-permissions` explicitly; otherwise Antigravity may stop at an interactive permission prompt.
+
+To check live quota:
+
+```text
+node plugins/agy-codex/scripts/antigravity.mjs quota
+```
 
 ### Choose a model
 

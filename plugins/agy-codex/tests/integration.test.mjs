@@ -10,7 +10,7 @@ const runner = path.resolve("plugins/agy-codex/scripts/antigravity.mjs");
 function fakeAgy() {
   const root = fs.mkdtempSync(path.join(os.tmpdir(), "agy-int-"));
   const fake = path.join(root, "agy.mjs");
-  fs.writeFileSync(fake, "if (process.argv.includes('--version')) console.log('agy 1.0.3'); else console.log('integration response')");
+  fs.writeFileSync(fake, "if (process.argv.includes('--version')) console.log('agy 1.0.3'); else if (process.argv.includes('/usage')) console.log('Gemini Models Weekly Limit Remaining 78%'); else console.log('integration response')");
   return { root, fake };
 }
 
@@ -23,6 +23,11 @@ test("setup and ask work through the installed runtime", () => {
   const setup = JSON.parse(run(fake, ["setup"], root));
   assert.equal(setup.installed, true);
   assert.match(run(fake, ["ask", "--", "hello"], root), /integration response/);
+});
+
+test("quota forwards the live usage query", () => {
+  const { root, fake } = fakeAgy();
+  assert.match(run(fake, ["quota"], root), /Weekly Limit Remaining 78%/);
 });
 
 test("empty output is a failing integration result", () => {

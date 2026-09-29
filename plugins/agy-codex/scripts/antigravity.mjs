@@ -28,6 +28,21 @@ if (parsed.command === "setup") {
     if (result.code === 0 && result.stdout.trim()) process.stdout.write(result.stdout);
     else { console.error(formatFailure({ result, bin: found.path })); process.exitCode = result.timedOut ? 124 : (result.code || 1); }
   }
+} else if (["quota", "usage"].includes(parsed.command)) {
+  const found = resolveAgyBin();
+  if (!found) {
+    console.error("error: agy was not found; set AGY_BIN or install Antigravity CLI");
+    process.exitCode = 127;
+  } else {
+    const result = await runAgy({
+      bin: found.path,
+      args: buildAgyArgs({ prompt: "/usage", printTimeout: parsed.values["print-timeout"] || "30s" }),
+      cwd: process.cwd(),
+      timeoutMs: 45_000,
+    });
+    if (result.code === 0 && result.stdout.trim()) process.stdout.write(result.stdout);
+    else { console.error(formatFailure({ result, bin: found.path })); process.exitCode = result.timedOut ? 124 : (result.code || 1); }
+  }
 } else if (["start", "status", "result", "cancel"].includes(parsed.command)) {
   const stateDir = defaultStateDir();
   if (parsed.command === "start") {
